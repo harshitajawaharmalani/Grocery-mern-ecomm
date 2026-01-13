@@ -5,6 +5,7 @@ import { useAppContext } from "../context/AppContext";
 const Products = () => {
   const { products, searchQuery } = useAppContext();
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   useEffect(() => {
     if (searchQuery.length > 0) {
       setFilteredProducts(
@@ -16,6 +17,26 @@ const Products = () => {
       setFilteredProducts(products);
     }
   }, [products, searchQuery]);
+
+  useEffect(() => {
+    const fetchProductData = async () => {
+      try {
+        const { data } = await axios.post("/api/product/productinfo", { id });
+        if (data.success) {
+          const p = data.product;
+          setName(p.name);
+          setDescription(p.description);
+          setCategory(p.category);
+          setPrice(p.price);
+          setOfferPrice(p.offerPrice);
+          setExistingImages(p.image || []); // Save the old image URLs here
+        }
+      } catch (error) {
+        toast.error("Failed to load product data");
+      }
+    };
+    if (id) fetchProductData();
+}, [id, axios]);
   return (
     <div className="mt-16">
       <h1 className="text-3xl lg:text-4xl font-medium">All Products</h1>

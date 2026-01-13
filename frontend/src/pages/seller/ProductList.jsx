@@ -1,8 +1,34 @@
 import toast from "react-hot-toast";
 import { useAppContext } from "../../context/AppContext";
+import { useNavigate } from "react-router-dom";
 
 const ProductList = () => {
   const { products, fetchProducts, axios } = useAppContext();
+  const navigate = useNavigate();
+
+
+  const deleteProduct = async (id) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      try {
+        // Assuming your backend route is DELETE /api/product/delete
+        const { data } = await axios.post("/api/product/delete", { id }); 
+        
+        if (data.success) {
+          toast.success(data.message);
+          fetchProducts(); // Refresh the list
+        } else {
+          toast.error(data.message);
+        }
+      } catch (error) {
+        toast.error(error.message);
+      }
+    }
+  };
+  const handleEdit = (product) => {
+    // Navigate to the AddProduct page and pass the product data
+    // Or open your Edit Modal here
+    console.log("Edit product:", product);
+};
 
   const toggleStock = async (id, inStock) => {
     try {
@@ -31,6 +57,7 @@ const ProductList = () => {
                   Selling Price
                 </th>
                 <th className="px-4 py-3 font-semibold truncate">In Stock</th>
+                <th className="px-4 py-3 font-semibold truncate">Action</th>
               </tr>
             </thead>
             <tbody className="text-sm text-gray-500">
@@ -55,17 +82,30 @@ const ProductList = () => {
                   <td className="px-4 py-3">
                     <label className="relative inline-flex items-center cursor-pointer text-gray-900 gap-3">
                       <input
-                        onClick={() =>
-                          toggleStock(product._id, !product.inStock)
-                        }
-                        checked={product.inStock}
+                        onChange={() => toggleStock(product._id, !product.inStock)} // Change onClick to onChange
+                        checked={product.inStock} // Keep this
                         type="checkbox"
                         className="sr-only peer"
-                        defaultChecked={product.inStock}
                       />
                       <div className="w-12 h-7 bg-slate-300 rounded-full peer peer-checked:bg-blue-600 transition-colors duration-200"></div>
                       <span className="dot absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></span>
                     </label>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={() => navigate(`/seller/edit-product/${product._id}`)}
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => deleteProduct(product._id)}
+                        className="text-red-500 hover:text-red-700 font-medium"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

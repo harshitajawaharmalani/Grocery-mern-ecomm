@@ -37,11 +37,12 @@ export const AppContextProvider = ({ children }) => {
       if (data.success) {
         setUser(data.user);
         setCartItems(data.user.cart);
-      } else {
-        toast.error(data.message);
-      }
+      } 
+      // Removed the toast.error(data.message) here 
+      // so guest users don't see an error immediately upon visiting.
     } catch (error) {
-      toast.error(error.message);
+      // Only log or handle actual network errors, not 401s
+      console.log("User not logged in");
     }
   };
 

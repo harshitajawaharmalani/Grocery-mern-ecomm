@@ -1,21 +1,50 @@
 import { assets, categories } from "../../assets/assets";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { AppContext } from "../../context/AppContext";
+import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 const AddProduct = () => {
   const { axios } = useContext(AppContext);
+  const { id } = useParams();
   const [files, setFiles] = useState([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
   const [offerPrice, setOfferPrice] = useState("");
+  const [existingImages, setExistingImages] = useState([]);
 
+  useEffect(() => {
+    const fetchProductData = async () => {
+      try {
+        const { data } = await axios.post("/api/product/product-info", { id });
+        if (data.success) {
+          const p = data.product;
+          setName(p.name);
+          setDescription(p.description);
+          setCategory(p.category);
+          setPrice(p.price);
+          setOfferPrice(p.offerPrice);
+          
+          // FIX 2: Store the product images from database
+          // Ensure your backend returns the image array (e.g., p.image or p.images)
+          setExistingImages(p.image || []); 
+        }
+      } catch (error) {
+        toast.error("Failed to load product data");
+      }
+    };
+
+    if (id) {
+      fetchProductData();
+    }
+  }, [id, axios]);
   const handleSubmit = async (e) => {
     try {
       e.preventDefault();
 
       const formData = new FormData();
+      if (id) formData.append("id", id);
       formData.append("name", name);
       formData.append("description", description);
       formData.append("category", category);
@@ -26,7 +55,8 @@ const AddProduct = () => {
         formData.append("image", files[i]);
       }
 
-      const { data } = await axios.post("/api/product/add-product", formData);
+      const url = id ? "/api/product/update-product" : "/api/product/add-product";
+      const { data } = await axios.post(url, formData);
       if (data.success) {
         toast.success(data.message);
         setName("");
@@ -65,19 +95,20 @@ const AddProduct = () => {
                     hidden
                   />
                   <img
-                    className="max-w-24 cursor-pointer"
-                    src={
-                      files[index]
-                        ? URL.createObjectURL(files[index])
-                        : assets.upload_area
-                    }
-                    alt="uploadArea"
-                    width={100}
-                    height={100}
+                  className="max-w-24 cursor-pointer border rounded-md"
+                  src={
+                  files[index]
+                  ? URL.createObjectURL(files[index]) // Show new upload preview
+                  : existingImages[index] 
+                  ? `http://localhost:5000/images/${existingImages[index]}` // Show existing product image
+                  : assets.upload_area // Show default placeholder
+                  }
+                  alt="uploadArea"
                   />
                 </label>
               ))}
           </div>
+          {id && <p className="text-xs text-gray-400 mt-1">* Uploading new images will replace old ones</p>}
         </div>
         <div className="flex flex-col gap-1 max-w-md">
           <label className="text-base font-medium" htmlFor="product-name">
@@ -159,6 +190,9 @@ const AddProduct = () => {
         </div>
         <button className="px-8 py-2.5 bg-indigo-500 text-white font-medium rounded">
           ADD
+        </button>
+        <button className="w-full px-8 py-2.5 bg-indigo-500 text-white font-medium rounded hover:bg-indigo-600 transition-colors">
+          {id ? "UPDATE PRODUCT" : "ADD PRODUCT"}
         </button>
       </form>
     </div>

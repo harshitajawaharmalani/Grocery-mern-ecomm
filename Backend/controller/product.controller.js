@@ -140,3 +140,45 @@ export const changeStock = async (req, res) => {
     }
 };
 
+
+
+export const deleteProduct = async (req, res) => {
+    try {
+        const { id } = req.body;
+        await Product.findByIdAndDelete(id);
+        res.json({ success: true, message: "Product Deleted" });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+
+
+export const updateProduct = async (req, res) => {
+    try {
+        const { id, name, description, category, price, offerPrice } = req.body;
+        
+        const updateData = {
+            name,
+            description,
+            category,
+            price: Number(price),
+            offerPrice: Number(offerPrice)
+        };
+
+        // If the seller uploaded NEW images, we replace the old ones
+        if (req.files && req.files.length > 0) {
+            updateData.image = req.files.map(file => file.filename);
+        }
+
+        const updated = await Product.findByIdAndUpdate(id, updateData, { new: true });
+        
+        if (!updated) {
+            return res.json({ success: false, message: "Product not found" });
+        }
+
+        res.json({ success: true, message: "Product Updated Successfully" });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
